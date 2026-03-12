@@ -4,6 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>IEEE Ege Sertifika Doğrulama</title>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
   <style>
     :root {
       --ieee-blue: #00629B; /* IEEE Kurumsal Mavisi */
@@ -224,6 +227,13 @@
       img.onload = () => {
         result.innerHTML = `<h3>✅ Sertifika Doğrulandı: ${id}</h3>`;
         result.appendChild(img);
+
+        // SADECE EKLENEN BUTON GÖREVİ
+        const downloadBtn = document.createElement('button');
+        downloadBtn.className = 'download-btn';
+        downloadBtn.innerHTML = '📄 PDF Olarak İndir';
+        downloadBtn.onclick = () => downloadAsPDF(img, id);
+        result.appendChild(downloadBtn);
       };
 
       img.onerror = () => {
@@ -234,6 +244,33 @@
       };
     }
     
+    // SADECE EKLENEN PDF İNDİRME FONKSİYONU (HATA GİDERİLMİŞ CANVAS YÖNTEMİ)
+    function downloadAsPDF(imgElement, certId) {
+      // 1. Görseli bir canvas'a çizerek verisini güvenli hale getiriyoruz
+      const canvas = document.createElement('canvas');
+      canvas.width = imgElement.naturalWidth;
+      canvas.height = imgElement.naturalHeight;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(imgElement, 0, 0);
+      
+      // 2. Canvas üzerinden base64 formatında PNG verisi alıyoruz
+      const imgData = canvas.toDataURL('image/png');
+
+      // 3. jsPDF ile pdf oluşturup indiriyoruz
+      const { jsPDF } = window.jspdf;
+      const orientation = canvas.width > canvas.height ? 'l' : 'p';
+      
+      const pdf = new jsPDF({
+        orientation: orientation,
+        unit: 'px',
+        format: [canvas.width, canvas.height]
+      });
+
+      // HTML element yerine güvenli base64 verisini veriyoruz
+      pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+      pdf.save(`Sertifika_${certId}.pdf`);
+    }
+
     // Enter tuşuna basınca çalışması için
     document.getElementById('certId').addEventListener('keypress', function (e) {
         if (e.key === 'Enter') {
